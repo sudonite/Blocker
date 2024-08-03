@@ -9,6 +9,7 @@ import (
 	"github.com/sudonite/blocker/types"
 )
 
+// @TODO: Implement levelDB or rocksDB
 type BlockStorer interface {
 	Put(*proto.Block) error
 	Get(string) (*proto.Block, error)

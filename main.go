@@ -5,24 +5,38 @@ import (
 	"log"
 	"time"
 
+	"github.com/sudonite/blocker/crypto"
 	"github.com/sudonite/blocker/node"
 	"github.com/sudonite/blocker/proto"
+	"github.com/sudonite/blocker/util"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 )
 
 func main() {
-	makeNode(":3000", []string{})
+	makeNode("127.0.0.1:3000", []string{}, true)
 	time.Sleep(time.Second)
-	makeNode(":4000", []string{":3000"})
-	time.Sleep(4 * time.Second)
-	makeNode(":5000", []string{":4000"})
+	makeNode("127.0.0.1:4000", []string{"127.0.0.1:3000"}, false)
+	time.Sleep(time.Second)
+	makeNode("127.0.0.1:5000", []string{"127.0.0.1:4000"}, false)
 
-	select {}
+	for {
+		time.Sleep(time.Second * 3)
+		makeTransaction()
+	}
 }
 
-func makeNode(listenAddr string, bootstrapNodes []string) *node.Node {
-	n := node.NewNode()
+func makeNode(listenAddr string, bootstrapNodes []string, isValidator bool) *node.Node {
+	cfg := node.ServerConfig{
+		Version:    "blocker-0.1",
+		ListenAddr: listenAddr,
+	}
+
+	if isValidator {
+		cfg.PrivateKey = crypto.GenerateNewPrivateKey()
+	}
+
+	n := node.NewNode(cfg)
 
 	go n.Start(listenAddr, bootstrapNodes)
 
@@ -36,14 +50,26 @@ func makeTransaction() {
 	}
 
 	c := proto.NewNodeClient(client)
+	privKey := crypto.GenerateNewPrivateKey()
 
-	version := &proto.Version{
-		Version:    "blocker-0.1",
-		Height:     1,
-		ListenAddr: ":4000",
+	tx := &proto.Transaction{
+		Version: 1,
+		Inputs: []*proto.TxInput{
+			{
+				PrevTxHash:   util.RandomHash(),
+				PrevOutIndex: 0,
+				PublicKey:    privKey.Public().Bytes(),
+			},
+		},
+		Outputs: []*proto.TxOutput{
+			{
+				Amount:  99,
+				Address: privKey.Public().Address().Byte(),
+			},
+		},
 	}
 
-	_, err = c.Handshake(context.TODO(), version)
+	_, err = c.HandleTransaction(context.TODO(), tx)
 	if err != nil {
 		log.Fatal(err)
 	}
