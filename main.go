@@ -21,7 +21,7 @@ func main() {
 	makeNode("127.0.0.1:5000", []string{"127.0.0.1:4000"}, false)
 
 	for {
-		time.Sleep(time.Second * 3)
+		time.Sleep(time.Millisecond * 800)
 		makeTransaction()
 	}
 }

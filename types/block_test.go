@@ -8,7 +8,7 @@ import (
 	"github.com/sudonite/blocker/util"
 )
 
-func TestSignBlock(t *testing.T) {
+func TestSignVerifyBlock(t *testing.T) {
 	var (
 		block   = util.RandomBlock()
 		privKey = crypto.GenerateNewPrivateKey()
@@ -18,6 +18,15 @@ func TestSignBlock(t *testing.T) {
 	sig := SignBlock(privKey, block)
 	assert.Equal(t, 64, len(sig.Bytes()))
 	assert.True(t, sig.Verify(*pubKey, HashBlock(block)))
+
+	assert.Equal(t, pubKey.Bytes(), block.PublicKey)
+	assert.Equal(t, sig.Bytes(), block.Signature)
+	assert.True(t, VerifyBlock(block))
+
+	invalidPrivKey := crypto.GenerateNewPrivateKey()
+	block.PublicKey = invalidPrivKey.Public().Bytes()
+
+	assert.False(t, VerifyBlock(block))
 }
 
 func TestHashBlock(t *testing.T) {
