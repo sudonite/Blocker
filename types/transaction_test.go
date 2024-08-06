@@ -11,10 +11,10 @@ import (
 
 func TestNewTransaction(t *testing.T) {
 	fromPrivKey := crypto.GenerateNewPrivateKey()
-	fromAddress := fromPrivKey.Public().Address().Byte()
+	fromAddress := fromPrivKey.Public().Address().Bytes()
 
 	toPrivKey := crypto.GenerateNewPrivateKey()
-	toAddress := toPrivKey.Public().Address().Byte()
+	toAddress := toPrivKey.Public().Address().Bytes()
 
 	input := &proto.TxInput{
 		PrevTxHash:   util.RandomHash(),

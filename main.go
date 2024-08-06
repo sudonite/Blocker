@@ -64,7 +64,7 @@ func makeTransaction() {
 		Outputs: []*proto.TxOutput{
 			{
 				Amount:  99,
-				Address: privKey.Public().Address().Byte(),
+				Address: privKey.Public().Address().Bytes(),
 			},
 		},
 	}

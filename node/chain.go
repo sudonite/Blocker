@@ -10,6 +10,8 @@ import (
 	"github.com/sudonite/blocker/types"
 )
 
+const godSeed = "f0e9fd05d91bc671207d4b30ab8e58e513ab534f0d22dde241039d96f59f29c8"
+
 type HeaderList struct {
 	headers []*proto.Header
 }
@@ -41,12 +43,14 @@ func (list *HeaderList) Len() int {
 }
 
 type Chain struct {
+	txStore    TxStorer
 	blockStore BlockStorer
 	headers    *HeaderList
 }
 
-func NewChain(bs BlockStorer) *Chain {
+func NewChain(bs BlockStorer, txStore TxStorer) *Chain {
 	chain := &Chain{
+		txStore:    txStore,
 		blockStore: bs,
 		headers:    NewHeaderList(),
 	}
@@ -68,6 +72,13 @@ func (c *Chain) AddBlock(b *proto.Block) error {
 
 func (c *Chain) addBlock(b *proto.Block) error {
 	c.headers.Add(b.Header)
+
+	for _, tx := range b.Transactions {
+		if err := c.txStore.Put(tx); err != nil {
+			return err
+		}
+	}
+
 	return c.blockStore.Put(b)
 }
 
@@ -104,7 +115,7 @@ func (c *Chain) ValidateBlock(b *proto.Block) error {
 }
 
 func createGenesisBlock() *proto.Block {
-	privKey := crypto.GenerateNewPrivateKey()
+	privKey := crypto.GenerateNewPrivateKeyFromSeedStr(godSeed)
 
 	block := &proto.Block{
 		Header: &proto.Header{
@@ -112,6 +123,18 @@ func createGenesisBlock() *proto.Block {
 		},
 	}
 
+	tx := &proto.Transaction{
+		Version: 1,
+		Inputs:  []*proto.TxInput{},
+		Outputs: []*proto.TxOutput{
+			{
+				Amount:  1000,
+				Address: privKey.Public().Address().Bytes(),
+			},
+		},
+	}
+
+	block.Transactions = append(block.Transactions, tx)
 	types.SignBlock(privKey, block)
 
 	return block

@@ -38,6 +38,15 @@ func GeneratePrivateKeyFromSeed(seed []byte) *PrivateKey {
 	}
 }
 
+func GenerateNewPrivateKeyFromSeedStr(seed string) *PrivateKey {
+	seedBytes, err := hex.DecodeString(seed)
+	if err != nil {
+		panic(err)
+	}
+
+	return GeneratePrivateKeyFromSeed(seedBytes)
+}
+
 func GenerateNewPrivateKey() *PrivateKey {
 	seed := make([]byte, SeedLen)
 
@@ -120,7 +129,7 @@ type Address struct {
 	value []byte
 }
 
-func (a Address) Byte() []byte {
+func (a Address) Bytes() []byte {
 	return a.value
 }
 
