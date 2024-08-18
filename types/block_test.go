@@ -5,8 +5,25 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/sudonite/blocker/crypto"
+	"github.com/sudonite/blocker/proto"
 	"github.com/sudonite/blocker/util"
 )
+
+func TestCalculateRootHash(t *testing.T) {
+	var (
+		privKey = crypto.GenerateNewPrivateKey()
+		block   = util.RandomBlock()
+		tx      = &proto.Transaction{
+			Version: 1,
+		}
+	)
+
+	block.Transactions = append(block.Transactions, tx)
+	SignBlock(privKey, block)
+
+	assert.True(t, VerifyRootHash(block))
+	assert.Equal(t, 32, len(block.Header.RootHash))
+}
 
 func TestSignVerifyBlock(t *testing.T) {
 	var (
